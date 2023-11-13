@@ -453,3 +453,10 @@ def wfreq2df(
         df[col] = df[col].apply(np.int64)
 
     return df, data
+
+def cupy_is_available():
+    try:
+        import cupy
+        return True
+    except:
+        return False
