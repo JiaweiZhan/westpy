@@ -47,6 +47,7 @@ class overlapMatrix:
                     raise RuntimeError
 
             for start in range(0, nwfc, batch_size):
+                logger.info(f"iffn wfc {start} / {nwfc}")
                 end = min(start + batch_size, nwfc)
                 wfc_r_batch = cp.fft.ifftn(cp.asarray(wfc_g[start:end]),
                                            axes=list(range(1, len(self.fftw) + 1)),
@@ -101,6 +102,7 @@ class overlapMatrix:
                     raise RuntimeError
 
             for x in range(0, nx, chunk_size):
+                logger.info(f"comute overlap matrix {x} / {nx}")
                 for y in range(0, ny, chunk_size):
                     for z in range(0, nz, chunk_size):
                         # Define chunk slices
@@ -149,6 +151,7 @@ class overlapMatrix:
 
             localized_wfc_r = np.zeros_like(wfc_r)
             for x in range(0, nx, chunk_size):
+                logger.info(f"comute localized wfc {x} / {nx}")
                 for y in range(0, ny, chunk_size):
                     for z in range(0, nz, chunk_size):
                         # Define chunk slices
