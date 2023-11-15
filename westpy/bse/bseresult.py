@@ -188,6 +188,7 @@ class BSEResult(object):
         print("waiting for user to close image preview...")
         plt.show()
         fig.clear()
+        return energyAxis, chiAxis.imag
 
     def __read_beta_zeta(self, ispin: int):
         self.norm = np.zeros(self.n_ipol, dtype=np.float64)
