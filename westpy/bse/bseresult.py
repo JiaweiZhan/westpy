@@ -4,7 +4,36 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.linalg.lapack as la
 from westpy.units import eV
+from multiprocessing import Pool
 
+def _calc_chi_single_freq(freq: float,
+                          broaden: float,
+                          n_ipol,
+                          nspin,
+                          n_total,
+                          b,
+                          r,
+                          zeta,
+                          norm):
+    degspin = 2.0 / nspin
+    omeg_c = freq + broaden * 1j
+
+    chi = np.zeros((n_ipol, n_ipol), dtype=np.complex128)
+
+    for ip2 in range(n_ipol):
+        a = np.full(n_total, omeg_c, dtype=np.complex128)
+        b_l = b[ip2, :]
+        c = b_l
+        r_l = r
+
+        b1, a1, c1, r1, ierr = la.zgtsv(b_l, a, c, r_l)
+        assert ierr == 0
+
+        for ip in range(n_ipol):
+            chi[ip2, ip] = np.dot(zeta[ip2, ip, :], r1)
+            chi[ip2, ip] *= -2.0 * degspin * norm[ip2]
+
+    return chi
 
 class BSEResult(object):
     def __init__(self, filename: str):
@@ -105,12 +134,11 @@ class BSEResult(object):
         energyAxis = np.linspace(xmin, xmax, n_step, endpoint=True)
         chiAxis = np.zeros(n_step, dtype=np.complex128)
 
+        freq_evs = [energy * eV for energy in energyAxis]
+        chis = self.__calc_chi(freq_evs, sigma_ev)
         for ie, energy in enumerate(energyAxis):
-            # eV to Ry
-            freq_ev = energy * eV
-
             # calculate susceptibility for given frequency
-            chi = self.__calc_chi(freq_ev, sigma_ev)
+            chi = chis[ie]
 
             # 1/Ry to 1/eV
             chi = chi * eV
@@ -226,23 +254,11 @@ class BSEResult(object):
                     else:
                         self.beta[ip, i] = average[ip] - amplitude[ip]
 
-    def __calc_chi(self, freq: float, broaden: float):
-        degspin = 2.0 / self.nspin
-        omeg_c = freq + broaden * 1j
+    def __calc_chi(self, freqs,
+                   broaden: float):
+        with Pool() as pool:
+            args = [(freq, broaden, self.n_ipol, self.nspin, self.n_total, self.b, self.r, self.zeta, self.norm) for freq in freqs]
 
-        chi = np.zeros((self.n_ipol, self.n_ipol), dtype=np.complex128)
+            results = pool.starmap(_calc_chi_single_freq, args)
+        return results
 
-        for ip2 in range(self.n_ipol):
-            a = np.full(self.n_total, omeg_c, dtype=np.complex128)
-            b = self.b[ip2, :]
-            c = b
-            r = self.r
-
-            b1, a1, c1, r1, ierr = la.zgtsv(b, a, c, r)
-            assert ierr == 0
-
-            for ip in range(self.n_ipol):
-                chi[ip2, ip] = np.dot(self.zeta[ip2, ip, :], r1)
-                chi[ip2, ip] *= -2.0 * degspin * self.norm[ip2]
-
-        return chi
