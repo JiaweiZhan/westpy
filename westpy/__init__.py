@@ -14,6 +14,7 @@ from westpy.bse import *
 from westpy.io_kernel import *
 from westpy.overlap_matrix import *
 from westpy.wstat import *
+from westpy.response import *
 
 __version__ = "5.5.0.pdep"
 

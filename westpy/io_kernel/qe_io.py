@@ -65,6 +65,11 @@ class qe_io(base_io):
                 for i in range(self.nbnd):
                     self.evc[i,:] = np.fromfile(f, dtype='complex128', count=self.npol * self.igwx)
                     f.seek(8, 1)
+        volume_resiprocal = np.abs(np.dot(np.cross(self.b1, self.b2), self.b3))
+        self.omega = np.power(2 * np.pi, 3) / (volume_resiprocal)
+        self.a1 = (2 * np.pi * (np.cross(self.b2, self.b3) / volume_resiprocal)).tolist()
+        self.a2 = (2 * np.pi * (np.cross(self.b3, self.b1) / volume_resiprocal)).tolist()
+        self.a3 = (2 * np.pi * (np.cross(self.b1, self.b2) / volume_resiprocal)).tolist()
 
     @staticmethod
     def pdep_index(fname):

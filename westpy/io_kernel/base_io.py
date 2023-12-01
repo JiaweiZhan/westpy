@@ -9,9 +9,13 @@ class base_io:
         self.igwx = 0
         self.npol = 0
         self.nbnd = 0
+        self.a1 = [0.0, 0.0, 0.0]
+        self.a2 = [0.0, 0.0, 0.0]
+        self.a3 = [0.0, 0.0, 0.0]
         self.b1 = [0.0, 0.0, 0.0]
         self.b2 = [0.0, 0.0, 0.0]
         self.b3 = [0.0, 0.0, 0.0]
+        self.omega = 0
         self.mill = None
         self.evc = None
         self.fftw = None
