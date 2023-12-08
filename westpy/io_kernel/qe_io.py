@@ -1,6 +1,7 @@
 import numpy as np
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 from .base_io import base_io
 
@@ -72,6 +73,13 @@ class qe_io(base_io):
         self.a3 = (2 * np.pi * (np.cross(self.b1, self.b2) / volume_resiprocal)).tolist()
 
     @staticmethod
+    def read_pdep(fname):
+        with open(fname, 'rb') as f:
+            header = np.fromfile(f, dtype='int32', count=32)
+            pdepg = np.fromfile(f, dtype=np.complex128, count=header[2])
+        return pdepg
+
+    @staticmethod
     def pdep_index(fname):
         base_name = os.path.basename(fname)
         file_name, _ = os.path.splitext(base_name)
@@ -93,11 +101,11 @@ class qe_io(base_io):
             fnames_cp[idx - 1] = fname
         fnames = fnames_cp
         self.pdepg = np.zeros( (len(fnames), len(self.mill)), dtype="complex128")
-        for idx, fname in enumerate(fnames):
-            with open(os.path.join(folder, fname), 'rb') as f:
-                header = np.fromfile(f, dtype='int32', count=32)
-                pdepg = np.fromfile(f, dtype=np.complex128, count = header[2])
-                self.pdepg[idx] = pdepg
+        fnames = [os.path.join(folder, fname) for fname in fnames]
+        with ThreadPoolExecutor() as executor:
+            results = executor.map(lambda fname: self.read_pdep(fname), fnames)
+        for idx, pdepg in enumerate(results):
+            self.pdepg[idx] = pdepg
 
         # read pdepeig
         # Load the output data
