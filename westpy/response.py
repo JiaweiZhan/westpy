@@ -43,7 +43,7 @@ class Response:
         g1, g2, g3 = self.qe_container.mill.T
 
         perturbation_g = np.fft.fftn(perturbation, norm='forward', axes=(-3, -2, -1))[:, g1, g2, g3]
-        prefactor = self.qe_container.omega * np.sum(self.chi_eigvec.conj()[None, :, :] * perturbation_g.conj()[:, None, :], axis=-1) # [nbatch, neig]
+        prefactor = self.qe_container.omega * np.sum(self.chi_eigvec.conj()[None, :, :] * perturbation_g[:, None, :], axis=-1) # [nbatch, neig]
         deltarho_g = np.sum((self.chi_eigval[None, :] * prefactor)[:, :, None] * self.chi_eigvec[None, :, :], axis=1)
         deltarho_r = wfc_g2r(deltarho_g, list(self.fftw), self.qe_container.mill).real
         return deltarho_r
