@@ -460,7 +460,10 @@ def wfreq2df(
 def cupy_is_available():
     try:
         import cupy
-        return True
+        try:
+            return cupy.cuda.is_available()
+        except:
+            return False
     except:
         return False
 
