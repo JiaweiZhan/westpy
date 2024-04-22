@@ -1,9 +1,16 @@
 import numpy as np
 import json
-import os
+import os, sys
+from typing import List
 from concurrent.futures import ThreadPoolExecutor
 
 from .base_io import base_io
+
+HD_LENGTH = 32
+HD_VERSION = 210405
+HD_ID_VERSION = 0
+HD_ID_LITTLE_ENDIAN = 1
+HD_ID_DIMENSION = 2
 
 class qe_io(base_io):
     def __init__(self,
@@ -86,7 +93,7 @@ class qe_io(base_io):
         return int(file_name.split("E")[-1])
 
     def read_wstat(self,
-                  folder: str,
+                   folder: str,
                   ):
         fnames_all = os.listdir(folder)
         fnames = []
@@ -114,3 +121,63 @@ class qe_io(base_io):
 
         # Extract converged PDEP eigenvalues
         self.pdepeig = np.array(data['exec']['davitr'][-1]['ev'],dtype='f8') # -1 identifies the last iteration
+
+
+    @staticmethod
+    def write_pdep(pdep_val: np.ndarray,
+                   fname: str):
+        header = np.zeros(HD_LENGTH, dtype='int32')
+        header[HD_ID_VERSION] = HD_VERSION
+        header[HD_ID_DIMENSION] = pdep_val.size
+        header[HD_ID_LITTLE_ENDIAN] = 1 if sys.byteorder == 'little' else 0
+        with open(fname, 'wb') as f:
+            f.write(header.tobytes())
+            f.write(pdep_val.tobytes())
+
+    def write_summary(self,
+                      pdepeig: np.ndarray,
+                      pdep_fnames: List[str],
+                      fname: str='summary_westpy.json',
+                      ):
+        data = {}
+        data["dielectric_matrix"] = {}
+        data['dielectric_matrix']['domain'] = {}
+        data['dielectric_matrix']['domain']['a1'] = self.a1
+        data['dielectric_matrix']['domain']['a2'] = self.a2
+        data['dielectric_matrix']['domain']['a3'] = self.a3
+        data['dielectric_matrix']['domain']['b1'] = self.b1.tolist()
+        data['dielectric_matrix']['domain']['b2'] = self.b2.tolist()
+        data['dielectric_matrix']['domain']['b3'] = self.b3.tolist()
+        data['dielectric_matrix']['pdep'] = [{}]
+        data['dielectric_matrix']['pdep'][0]['iq'] = 1
+        data['dielectric_matrix']['pdep'][0]['q'] = [0.0, 0.0, 0.0]
+        data['dielectric_matrix']['pdep'][0]['eigenval'] = pdepeig.tolist()
+        data['dielectric_matrix']['pdep'][0]['eigenvec'] = pdep_fnames
+        with open(fname, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+
+    def write_wstat(self,
+                    pdepeig: np.ndarray,
+                    pdepvec: np.ndarray,
+                    prefix: str = "westpy",
+                    eig_mat : str = 'chi',
+                    ):
+        assert eig_mat in ['chi', 'chi_0'], "eig_mat must be either 'chi' or 'chi_0'"
+        if eig_mat == 'chi':
+            pdepeig = pdepeig / (pdepeig + 1.0)
+        outFolder = prefix + ".wstat.save"
+        if not os.path.exists(outFolder):
+            os.makedirs(outFolder)
+        npdep = pdepvec.shape[0]
+        fnames = []
+        for i in range(npdep):
+            fname = "Q" + str(1).zfill(9) + "E" + str(i + 1).zfill(9) + ".dat"
+            fnames.append(fname)
+
+        def write_wstat_helper(vec, fname, outFolder):
+            self.write_pdep(vec, os.path.join(outFolder, fname))
+
+        with ThreadPoolExecutor() as executor:
+            executor.map(lambda vecfname: write_wstat_helper(*vecfname, outFolder=outFolder),
+                         zip(pdepvec, fnames))
+        self.write_summary(pdepeig, fnames, os.path.join(outFolder, 'summary.json'))
