@@ -132,7 +132,7 @@ class qe_io(base_io):
         header[HD_ID_LITTLE_ENDIAN] = 1 if sys.byteorder == 'little' else 0
         with open(fname, 'wb') as f:
             f.write(header.tobytes())
-            f.write(pdep_val.tobytes())
+            f.write(pdep_val.astype(np.complex128).tobytes())
 
     def write_summary(self,
                       pdepeig: np.ndarray,
