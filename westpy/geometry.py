@@ -128,9 +128,9 @@ class Geometry(object):
         import numpy as np
 
         #
-        self.cell["a1"] = np.array(a1, dtype="f8") * units
-        self.cell["a2"] = np.array(a2, dtype="f8") * units
-        self.cell["a3"] = np.array(a3, dtype="f8") * units
+        self.cell["a1"] = np.array(a1, dtype=np.float64) * units
+        self.cell["a2"] = np.array(a2, dtype=np.float64) * units
+        self.cell["a3"] = np.array(a3, dtype=np.float64) * units
         self.cell["volume"] = np.dot(
             self.cell["a1"], np.cross(self.cell["a2"], self.cell["a3"])
         )
@@ -263,7 +263,7 @@ class Geometry(object):
 
         >>> from westpy import *
         >>> geom = Geometry()
-        >>> geom.addAtomsFromOnlineXYZ( "http://www.west-code.org/database/gw100/xyz/CH4.xyz" )
+        >>> geom.addAtomsFromOnlineXYZ( "https://west-code.org/database/gw100/xyz/CH4.xyz" )
         """
         #
         import urllib.request
@@ -283,7 +283,7 @@ class Geometry(object):
 
         >>> from westpy import *
         >>> geom = Geometry()
-        >>> geom.addAtomsFromOnlineXYZ( "http://www.west-code.org/database/gw100/xyz/CH4.xyz" )
+        >>> geom.addAtomsFromOnlineXYZ( "https://west-code.org/database/gw100/xyz/CH4.xyz" )
         >>> nat = geom.getNumberOfAtoms()
         >>> print( nat )
         5
@@ -302,7 +302,7 @@ class Geometry(object):
 
         >>> from westpy import *
         >>> geom = Geometry()
-        >>> geom.addAtomsFromOnlineXYZ( "http://www.west-code.org/database/gw100/xyz/CH4.xyz" )
+        >>> geom.addAtomsFromOnlineXYZ( "https://west-code.org/database/gw100/xyz/CH4.xyz" )
         >>> ntyp = geom.getNumberOfSpecies()
         >>> print( ntyp )
         2
@@ -325,7 +325,7 @@ class Geometry(object):
 
         >>> from westpy import *
         >>> geom = Geometry()
-        >>> geom.addAtomsFromOnlineXYZ( "http://www.west-code.org/database/gw100/xyz/CH4.xyz" )
+        >>> geom.addAtomsFromOnlineXYZ( "https://west-code.org/database/gw100/xyz/CH4.xyz" )
         >>> geom.addSpecies( "C", "http://www.quantum-simulation.org/potentials/sg15_oncv/xml/C_ONCV_PBE-1.0.xml")
         >>> geom.addSpecies( "H", "http://www.quantum-simulation.org/potentials/sg15_oncv/xml/H_ONCV_PBE-1.0.xml")
         >>> nelec = geom.getNumberOfElectrons()
@@ -364,7 +364,7 @@ class Geometry(object):
 
         >>> from westpy import *
         >>> geom = Geometry()
-        >>> geom.addAtomsFromOnlineXYZ( "http://www.west-code.org/database/gw100/xyz/CH4.xyz" )
+        >>> geom.addAtomsFromOnlineXYZ( "https://west-code.org/database/gw100/xyz/CH4.xyz" )
         >>> geom.addSpecies( "C", "http://www.quantum-simulation.org/potentials/sg15_oncv/xml/C_ONCV_PBE-1.0.xml")
         >>> geom.addSpecies( "H", "http://www.quantum-simulation.org/potentials/sg15_oncv/xml/H_ONCV_PBE-1.0.xml")
         >>> geom.downloadPseudopotentials()
@@ -432,7 +432,7 @@ class Geometry(object):
             print(xyz)
         xyzview.setStyle({style: {}})
         # draw the box
-        a0 = np.array([0.0, 0.0, 0.0], dtype="f8")
+        a0 = np.array([0.0, 0.0, 0.0], dtype=np.float64)
         from_ = [a0, a1 + a2, a1 + a3, a2 + a3]
         to_ = [
             [a1, a2, a3],

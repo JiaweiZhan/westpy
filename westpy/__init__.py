@@ -11,12 +11,10 @@ from westpy.session import *
 from westpy.lifetime import *
 from westpy.qdet import *
 from westpy.bse import *
-from westpy.io_kernel import *
-from westpy.overlap_matrix import *
-from westpy.wstat import *
-from westpy.response import *
+from westpy.relaxation import *
+from westpy.activeSpace import *
 
-__version__ = "5.5.0.pdep"
+__version__ = "6.0.0"
 
 
 def header():

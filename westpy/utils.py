@@ -1,7 +1,4 @@
 """ Set of utilities."""
-import numpy as np
-from typing import List
-from loguru import logger
 
 
 def extractFileNamefromUrl(url):
@@ -15,7 +12,7 @@ def extractFileNamefromUrl(url):
     :Example:
 
     >>> from westpy import *
-    >>> extractFileNamefromUrl("http://www.west-code.org/database/gw100/xyz/CH4.xyz")
+    >>> extractFileNamefromUrl("https://west-code.org/database/gw100/xyz/CH4.xyz")
     """
     #
     fname = None
@@ -36,7 +33,7 @@ def download(url, fname=None):
     :Example:
 
     >>> from westpy import *
-    >>> download("http://www.west-code.org/database/gw100/xyz/CH4.xyz")
+    >>> download("https://west-code.org/database/gw100/xyz/CH4.xyz")
 
     .. note:: The file will be downloaded in the current directory.
     """
@@ -439,8 +436,8 @@ def wfreq2df(
     for s in range(1, data["system"]["electron"]["nspin"] + 1):
         for k in data["system"]["bzsamp"]["k"]:
             kindex = f"K{k['id']+(s-1)*len(data['system']['bzsamp']['k']):06d}"
-            for i, n in enumerate(data["output"]["Q"]["bandmap"]):
-                d = data["output"]["Q"][kindex]
+            d = data["output"]["Q"][kindex]
+            for i, n in enumerate(data["input"]["wfreq_control"]["qp_bands"][s - 1]):
                 row = [k["id"], s, n]
                 for key in dfKeys:
                     if "re" in d[key]:
@@ -456,62 +453,3 @@ def wfreq2df(
         df[col] = df[col].apply(np.int64)
 
     return df, data
-
-def cupy_is_available():
-    try:
-        import cupy
-        try:
-            return cupy.cuda.is_available()
-        except:
-            return False
-    except:
-        return False
-
-def wfc_g2r(wfc: np.ndarray,
-            fftw: List[int],
-            mill: np.ndarray,
-            gamma_only: bool = True,
-            use_gpu: bool = True,
-            batch_size: int = 0):
-
-    free_gpu_memory = 0
-    if use_gpu:
-        if cupy_is_available():
-            import cupy as cp
-            use_gpu = True
-            _, free_gpu_memory = cp.cuda.Device().mem_info
-            logger.info(f"GPU free memory: {free_gpu_memory / 10 ** 6:^g} MB")
-        else:
-            use_gpu = False
-
-    nwfc, _ = wfc.shape
-    wfc_g = np.zeros([nwfc] + fftw, dtype=wfc.dtype)
-    mill_x, mill_y, mill_z = mill.T
-
-    wfc_indices = np.arange(nwfc)[:, None]
-    wfc_g[wfc_indices, mill_x, mill_y, mill_z] = wfc
-    if gamma_only:
-        wfc_g[wfc_indices, - mill_x[1:], - mill_y[1: ], - mill_z[1: ]] = wfc[:, 1:].conj()
-
-    if use_gpu:
-        wfc_r = np.zeros([nwfc] + fftw, dtype=wfc.dtype)
-        if batch_size == 0:
-            batch_size = int(free_gpu_memory / np.prod(fftw) / 16 / 5)
-            if batch_size < 1:
-                logger.error(f"batch_size smaller than one! Free memory: {free_gpu_memory / 10 ** 6:^g} MB")
-                raise RuntimeError
-
-        for start in range(0, nwfc, batch_size):
-            logger.info(f"iffn wfc {start} / {nwfc}")
-            end = min(start + batch_size, nwfc)
-            wfc_r_batch = cp.fft.ifftn(cp.asarray(wfc_g[start:end]),
-                                       axes=list(range(1, len(fftw) + 1)),
-                                       norm='forward')
-
-            # Store the results in the corresponding part of wfc_r_total
-            wfc_r[start:end] = wfc_r_batch.get()
-    else:
-        wfc_r = np.fft.ifftn(wfc_g,
-                             axes=list(range(1, len(fftw) + 1)),
-                             norm='forward')
-    return wfc_r
