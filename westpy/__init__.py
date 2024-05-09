@@ -1,3 +1,9 @@
+import os
+
+os.environ["OMP_NUM_THREADS"] = "1"  # For OpenMP
+os.environ["OPENBLAS_NUM_THREADS"] = "1"  # For OpenBLAS
+os.environ["MKL_NUM_THREADS"] = "1"  # For MKL
+
 from westpy.units import *
 from westpy.utils import *
 from westpy.atom import *
