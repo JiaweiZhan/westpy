@@ -32,8 +32,8 @@ def write_pdep(pdep_val: np.ndarray, fname: str):
 
 
 def write_wstat_helper(irow, fname, pdepvec_fname, outFolder):
-    pdepvec = np.load(pdepvec_fname, mmap_mode="r+")
-    vec = pdepvec[irow]
+    pdepvec = np.load(pdepvec_fname, mmap_mode="r")
+    vec = pdepvec[irow, :]
     write_pdep(vec, os.path.join(outFolder, fname))
 
 
