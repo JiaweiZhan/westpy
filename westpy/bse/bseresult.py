@@ -199,10 +199,12 @@ class BSEResult(object):
             res = json.load(f)
 
         for ip, lp in enumerate(self.pols):
-            tmp = res["output"]["lanczos"][f"K{ispin:0>6}"][lp]["beta"]
+            # tmp = res["output"]["lanczos"][f"K{ispin:0>6}"][lp]["beta"]
+            tmp = res["output"]["lanczos"][lp]["beta"]
             beta_read = np.array(tmp)
 
-            tmp = res["output"]["lanczos"][f"K{ispin:0>6}"][lp]["zeta"]
+            # tmp = res["output"]["lanczos"][f"K{ispin:0>6}"][lp]["zeta"]
+            tmp = res["output"]["lanczos"][lp]["zeta"]
             zeta_read = np.array(tmp).reshape((3, self.n_lanczos))
 
             self.norm[ip] = beta_read[0]
